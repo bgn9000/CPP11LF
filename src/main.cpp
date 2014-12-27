@@ -7,9 +7,17 @@
 #include <list>
 #include <deque>
 
+#include <atomic>
+
 using namespace std::chrono;
 
-std::vector<high_resolution_clock::time_point> buffer(1000);
+void testThreadedFunction()
+{
+//    std::cout << "Start First" << std::endl;
+//    std::this_thread::sleep_for(milliseconds(100));
+}
+
+//std::vector<high_resolution_clock::time_point> buffer(1000);
 
 template<size_t _BufferCapacity, class _Tp, class _Alloc = std::allocator<_Tp>, template<typename, typename> class _BufferType = std::vector>
 class Publisher
@@ -43,53 +51,79 @@ public:
     Listener(Publisher<_BufferCapacity, _Tp, _Alloc,  _BufferType>& publisher) 
         : publisher_(publisher), pos_(0)
     {
+/*if (atomic_is_lock_free(std::atomic<int>())
+{
+}*/ 
     }
     
     void emptyPublisherBuffer()
     {
-        while (pos_ < publisher_.getPos())
+        while (pos_ < publisher_.getPos() || publisher_.getPos() < _BufferCapacity - 1)
         {
-            time_span_ = duration_cast<microseconds>(high_resolution_clock::now() - publisher_.getBuffer()[pos_]);
+            time_span_ = duration_cast<nanoseconds>(high_resolution_clock::now() - publisher_.getBuffer()[pos_]);
             ++pos_;
-std::cout << "Listener [" << pos_ << "] duration [" << time_span_.count() << "] us" << std::endl;
+//std::this_thread::sleep_for(nanoseconds(200));
+//std::cout << "Listener [" << pos_ << "] duration [" << time_span_.count() << "] ns" << std::endl;
         }
     }
         
 private:
     Publisher<_BufferCapacity, _Tp, _Alloc,  _BufferType>& publisher_;
     size_t pos_;
-    microseconds time_span_;
+    nanoseconds time_span_;
 };
 
-void testThreadedFunction()
+constexpr int capacity = 100000;
+
+template<size_t _BufferCapacity, class _Tp, class _Alloc = std::allocator<_Tp>, template<typename, typename> class _BufferType = std::vector>
+void testOneListenerThread(Listener<_BufferCapacity, _Tp, _Alloc,  _BufferType>& listener)
 {
-//    std::cout << "Start First" << std::endl;
-//    std::this_thread::sleep_for(milliseconds(100));
 }
 
 void testOnePublisherOneListener()
 {
     std::cout << "Start testOnePublisherOneListener" << std::endl;
-    constexpr int capacity = 10;
-    Publisher<capacity+1,high_resolution_clock::time_point> publisher; // buffer is a vector
-//    Publisher<capacity+1,high_resolution_clock::time_point, std::allocator<high_resolution_clock::time_point>, std::list> publisher2; // buffer is a list
-//    Publisher<capacity+1,high_resolution_clock::time_point, std::allocator<high_resolution_clock::time_point>, std::deque> publisher3; // buffer is a deque   
-    Listener<capacity+1,high_resolution_clock::time_point> listener(publisher);
-    
     // Publisher fill buffer then listener empty it
-    high_resolution_clock::time_point start = high_resolution_clock::now();
-    for (int cpt = 0; cpt < capacity; ++cpt)
     {
-        publisher.fill(high_resolution_clock::now());
+        Publisher<capacity+1,high_resolution_clock::time_point> publisher; // buffer is a vector
+        Listener<capacity+1,high_resolution_clock::time_point> listener(publisher);
+        high_resolution_clock::time_point start = high_resolution_clock::now();
+        for (int cpt = 0; cpt < capacity; ++cpt)
+        {
+            publisher.fill(high_resolution_clock::now());
+        }
+        high_resolution_clock::time_point end = high_resolution_clock::now();
+        nanoseconds time_span = duration_cast<nanoseconds>(end - start);
+        
+        start = high_resolution_clock::now();
+        listener.emptyPublisherBuffer();
+        end = high_resolution_clock::now();
+        nanoseconds time_span2 = duration_cast<nanoseconds>(end - start);
+        std::cout << "Basic fill (vector) took [" << time_span.count() << "] ns then empty took [" << time_span2.count() << "] ns" << std::endl;
+        
+        Publisher<capacity+1,high_resolution_clock::time_point, std::allocator<high_resolution_clock::time_point>, std::deque> publisher2; // buffer is a deque
+        Listener<capacity+1,high_resolution_clock::time_point, std::allocator<high_resolution_clock::time_point>, std::deque> listener2(publisher2);
+        start = high_resolution_clock::now();
+        for (int cpt = 0; cpt < capacity; ++cpt)
+        {
+            publisher2.fill(high_resolution_clock::now());
+        }
+        end = high_resolution_clock::now();
+        time_span = duration_cast<nanoseconds>(end - start);
+        start = high_resolution_clock::now();
+        listener2.emptyPublisherBuffer();
+        end = high_resolution_clock::now();
+        time_span2 = duration_cast<nanoseconds>(end - start);
+        std::cout << "Basic fill (deque) took [" << time_span.count() << "] ns then empty took [" << time_span2.count() << "] ns" << std::endl;
     }
-    high_resolution_clock::time_point end = high_resolution_clock::now();
-    microseconds time_span = duration_cast<microseconds>(end - start);
     
-    start = high_resolution_clock::now();
-    listener.emptyPublisherBuffer();
-    end = high_resolution_clock::now();
-    microseconds time_span2 = duration_cast<microseconds>(end - start);
-    std::cout << "Basic fill took [" << time_span.count() << "] us then empty took [" << time_span2.count() << "] us" << std::endl;
+    // Parallel fill and empty
+    {
+        Publisher<capacity+1,high_resolution_clock::time_point> publisher; // buffer is a vector
+        Listener<capacity+1,high_resolution_clock::time_point> listener(publisher);
+        std::thread testOneListenerThreaded(testOneListenerThread<capacity+1,high_resolution_clock::time_point>, std::ref(listener));
+        testOneListenerThreaded.join();
+    }
     
 //    std::this_thread::sleep_for(milliseconds(100));
 }
@@ -97,15 +131,20 @@ void testOnePublisherOneListener()
 int main(int argc, char* argv[])
 {
     std::cout << "Start" << std::endl;
-    
-    high_resolution_clock::time_point t1 = high_resolution_clock::now();
-    
+        
+    high_resolution_clock::time_point start = high_resolution_clock::now();
     std::thread firstThread(testThreadedFunction);
-    
     firstThread.join();
-    high_resolution_clock::time_point t2 = high_resolution_clock::now();
-    microseconds time_span = duration_cast<microseconds>(t2 - t1);
-    std::cout << "Spawn thread function took [" << time_span.count() << "] us" << std::endl;
+    high_resolution_clock::time_point end = high_resolution_clock::now();
+    nanoseconds time_span = duration_cast<nanoseconds>(end - start);
+    std::cout << "Spawn thread function took [" << time_span.count() << "] ns" << std::endl;
+    
+    start = high_resolution_clock::now();
+    std::thread secondThread(testThreadedFunction);
+    secondThread.detach();
+    end = high_resolution_clock::now();
+    time_span = duration_cast<nanoseconds>(end - start);
+    std::cout << "Spawn detach thread function took [" << time_span.count() << "] ns" << std::endl;
     
     std::thread testOnePublisherOneListenerThread(testOnePublisherOneListener);
     testOnePublisherOneListenerThread.join();
