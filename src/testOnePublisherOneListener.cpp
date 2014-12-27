@@ -1,22 +1,26 @@
 #include "publisher.h"
 #include "listener.h"
 
+#include <future>
+
 #include <vector>
 #include <deque>
 
 template<size_t _BufferCapacity, class _Tp, class _Alloc = std::allocator<_Tp>, template<typename, typename> class _BufferType = std::vector>
-void testOneListenerThread(Listener<_BufferCapacity, _Tp, _Alloc,  _BufferType>& listener)
+unsigned long long testOneListenerAsync(Listener<_BufferCapacity, _Tp, _Alloc,  _BufferType>& listener)
 {
-std::cout << "testOneListenerThread started" << std::endl;
+    high_resolution_clock::time_point start = high_resolution_clock::now();
     listener.emptyPublisherBuffer();
+    high_resolution_clock::time_point end = high_resolution_clock::now();
+    return (unsigned long long) duration_cast<nanoseconds>(end - start).count();
 }
 
 void testOnePublisherOneListener()
 {
-    std::cout << "Start testOnePublisherOneListener" << std::endl;
+    std::cout << "================== testOnePublisherOneListener =================" << std::endl;
     constexpr int capacity = 1000;
     // Publisher fill buffer then listener empty it
-    {
+    if (0) {
         Publisher<capacity+1,int> publisher; // buffer is a vector
         Listener<capacity+1,int> listener(publisher);
         high_resolution_clock::time_point start = high_resolution_clock::now();
@@ -53,9 +57,9 @@ void testOnePublisherOneListener()
     {
         Publisher<capacity+1,int> publisher; // buffer is a vector
         Listener<capacity+1,int> listener(publisher);
-        std::cout << "Spawn testOneListenerThread" << std::endl;
-        std::thread testOneListenerThreaded(testOneListenerThread<capacity+1,int>, std::ref(listener));
-//std::this_thread::sleep_for(seconds(20));
+        std::cout << "Async testOneListenerAsync" << std::endl;
+        auto time_span2 = std::async(std::launch::async, testOneListenerAsync<capacity+1,int>, std::ref(listener));
+std::this_thread::sleep_for(milliseconds(10));
 std::cout << "Parallel fill started" << std::endl;
         high_resolution_clock::time_point start = high_resolution_clock::now();
         for (int cpt = 0; cpt < capacity; ++cpt)
@@ -64,8 +68,7 @@ std::cout << "Parallel fill started" << std::endl;
         }
         high_resolution_clock::time_point end = high_resolution_clock::now();
         nanoseconds time_span = duration_cast<nanoseconds>(end - start);
-        testOneListenerThreaded.join();
-        std::cout << "Parallel fill (vector) took [" << time_span.count() /*<< "] ns then empty took [" << time_span2.count()*/ << "] ns" << std::endl;
+        std::cout << "Parallel fill (vector) took [" << time_span.count() << "] ns then empty took [" << time_span2.get() << "] ns" << std::endl;
     }
     
 //    std::this_thread::sleep_for(milliseconds(100));

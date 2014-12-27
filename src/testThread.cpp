@@ -1,5 +1,6 @@
 #include <iostream>
 
+#include <future>
 #include <thread>
 #include <chrono>
 
@@ -11,14 +12,21 @@ void testThreadedFunction()
 //    std::this_thread::sleep_for(milliseconds(100));
 }
 
+int testAsyncFunction()
+{
+    return 42;
+}
+
 void testThread()
 {
+    std::cout << "================== testThread =================" << std::endl;
+    
     high_resolution_clock::time_point start = high_resolution_clock::now();
     std::thread firstThread(testThreadedFunction);
-    firstThread.join();
     high_resolution_clock::time_point end = high_resolution_clock::now();
     nanoseconds time_span = duration_cast<nanoseconds>(end - start);
     std::cout << "Spawn thread function took [" << time_span.count() << "] ns" << std::endl;
+    firstThread.join();
     
     start = high_resolution_clock::now();
     std::thread secondThread(testThreadedFunction);
@@ -26,4 +34,11 @@ void testThread()
     end = high_resolution_clock::now();
     time_span = duration_cast<nanoseconds>(end - start);
     std::cout << "Spawn detach thread function took [" << time_span.count() << "] ns" << std::endl;
+    
+    start = high_resolution_clock::now();
+    auto ret = std::async(std::launch::async, testAsyncFunction);
+    end = high_resolution_clock::now();
+    time_span = duration_cast<nanoseconds>(end - start);
+    std::cout << "Async function took [" << time_span.count() << "] ns" << std::endl;
+    ret.get();
 }
