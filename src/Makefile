@@ -25,6 +25,8 @@ else
         CFLAGS += -g -ggdb -O2
 endif
 
+INCS = -I../include
+
 MYLIBS += -lnsl -lpthread -ldl -lrt
 
 all: $(TARGET)
