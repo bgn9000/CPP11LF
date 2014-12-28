@@ -1,5 +1,4 @@
-#include <iostream>
-#include <thread>
+#include "common.h"
 
 extern void testThread();
 extern void testChrono();
@@ -9,12 +8,13 @@ int main(int argc, char* argv[])
 {
     std::cout << "Start" << std::endl;
         
-    testThread();
-    
-    testChrono();
-    
-    std::thread testOnePublisherOneListenerThread(testOnePublisherOneListener);
-    testOnePublisherOneListenerThread.join();
+    if (doTestThread) testThread();
+    if (doTestChrono) testChrono();
+    if (doTestOnePublisherOneListenerThread)
+    {
+        std::thread testOnePublisherOneListenerThread(testOnePublisherOneListener);
+        testOnePublisherOneListenerThread.join();
+    }
     
     std::cout << "End" << std::endl;
     return 0;

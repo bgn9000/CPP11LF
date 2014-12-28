@@ -20,25 +20,18 @@ public:
     Listener(Publisher<_BufferCapacity, _Tp, _Alloc,  _BufferType>& publisher) 
         : publisher_(publisher), pos_(0)
     {
-/*if (atomic_is_lock_free(std::atomic<int>())
-{
-}*/ 
     }
     
     void emptyPublisherBuffer()
     {
-        while (1)
+        while (publisher_.isStop())
         {
             if (pos_ < publisher_.getPos())
             {
                 assert(pos_ == (unsigned int)publisher_.getBuffer()[pos_]);
-/*if (pos_ % 100 == 0)*/ std::cout << "Listener [" << pos_ << "] publisher [" << publisher_.getBuffer()[pos_] << ":" << publisher_.getPos() << "]" << std::endl;
+//if (pos_ % 100 == 0) std::cout << "Listener [" << pos_ << "] publisher [" << publisher_.getBuffer()[pos_] << ":" << publisher_.getPos() << "]" << std::endl;
 //std::this_thread::sleep_for(milliseconds(30));
                 ++pos_;
-            }
-            else if (publisher_.getPos() >= _BufferCapacity - 1)
-            {
-                break;
             }
 //std::cout << "Listener [" << pos_ << "] publisher [" << publisher_.getBuffer()[pos_] << ":" << publisher_.getPos() << "]" << std::endl;
         }

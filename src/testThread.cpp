@@ -1,12 +1,6 @@
-#include <iostream>
+#include "common.h"
 
 #include <future>
-#include <thread>
-#include <chrono>
-
-#include <ctime>
-
-using namespace std::chrono;
 
 void testThreadedFunction()
 {
