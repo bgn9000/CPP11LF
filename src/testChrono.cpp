@@ -6,7 +6,7 @@ void testChrono()
     
     ticks start, end;
     double latency = 0.0;
-    int loop = 1000000;
+    constexpr int loop = 1000000;
     
     start = getticks();
     for (int cpt=0; cpt < loop; ++cpt)

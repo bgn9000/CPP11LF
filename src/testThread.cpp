@@ -38,7 +38,7 @@ void testThread()
     std::cout << "Async function took [" << time_span.count() << "] ns" << std::endl;
     ret.get();
     
-    int nbNano = 1000;
+    constexpr int nbNano = 1000;
     start = high_resolution_clock::now();
     for (int cpt=0; cpt < nbNano; ++cpt)
     {
@@ -102,7 +102,7 @@ void testThread()
     time_span = duration_cast<nanoseconds>(end - start);
     std::cout << "this_thread::sleep_for 1 ms took [" << time_span.count()/nbNano << "] ns" << std::endl;
     
-    if (0)
+    if (doTestThread10ms)
     {
         start = high_resolution_clock::now();
         for (int cpt=0; cpt < nbNano; ++cpt)
