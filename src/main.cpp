@@ -28,6 +28,7 @@ void computeCpuFreq()
 
 bool doTestThread = true;
 bool doTestThread10ms = false;
+bool doTestAlloc = true;
 bool doTestChrono = true;
 bool doTestOnePublisherOneListenerThread = true;
 bool doTestOnePublisherOneListenerThreadBasic = true;
@@ -51,10 +52,11 @@ int main(int argc, char* argv[])
             switch(argv[cpt][1])
             {
                 case '1': doTestThread = false; break;
-                case '3': doTestChrono = false; break;
-                case '4': doTestOnePublisherOneListenerThread = false; break;
-                case '5': doTestOnePublisherOneListenerThreadBasic = false; break;
-                case '6': doTestOnePublisherOneListenerThreadParallel = false; break;
+                case '3': doTestAlloc = false; break;
+                case '4': doTestChrono = false; break;
+                case '5': doTestOnePublisherOneListenerThread = false; break;
+                case '6': doTestOnePublisherOneListenerThreadBasic = false; break;
+                case '7': doTestOnePublisherOneListenerThreadParallel = false; break;
                 default: 
                     std::cerr << "!!!! bad argument !!!!" << std::endl;
             }
@@ -71,6 +73,7 @@ int main(int argc, char* argv[])
     }
     
     if (doTestThread) testThread();
+    if (doTestAlloc) testAlloc();
     if (doTestChrono) testChrono();
     if (doTestOnePublisherOneListenerThread)
     {

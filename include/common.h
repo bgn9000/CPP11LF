@@ -31,11 +31,13 @@ extern double FREQUENCY_CPU;
 
 // tests
 extern void testThread();
+extern void testAlloc();
 extern void testChrono();
 extern void testOnePublisherOneListener();
 
 extern bool doTestThread;
 extern bool doTestThread10ms;
+extern bool doTestAlloc;
 extern bool doTestChrono;
 extern bool doTestOnePublisherOneListenerThread;
 extern bool doTestOnePublisherOneListenerThreadBasic;
