@@ -22,12 +22,16 @@ void computeCpuFreq()
     latency1 /= 100.0;
     latency2 /= 100.0;
     FREQUENCY_CPU = (double)(latency2/latency1) * 1000000000.0;
-    FREQUENCY_CPU_GETTICKS2TIME = (unsigned int)((FREQUENCY_CPU/1000000)+0.5);
 
-    std::cout << "FREQUENCY_CPU [" << FREQUENCY_CPU 
-              << "] FREQUENCY_CPU_GETTICKS2TIME [" << FREQUENCY_CPU_GETTICKS2TIME
-              << "]" << std::endl;
+    std::cout << "FREQUENCY_CPU [" << FREQUENCY_CPU << "]" << std::endl;
 }
+
+bool doTestThread = true;
+bool doTestThread10ms = false;
+bool doTestChrono = true;
+bool doTestOnePublisherOneListenerThread = true;
+bool doTestOnePublisherOneListenerThreadBasic = true;
+bool doTestOnePublisherOneListenerThreadParallel = true;
 
 int main(int argc, char* argv[])
 {
@@ -38,6 +42,33 @@ int main(int argc, char* argv[])
 #endif
 
     computeCpuFreq();
+    
+    // parse arguments
+    for (int cpt = 0; cpt < argc; ++cpt)
+    {
+        if (argv[cpt][0] == '-')
+        {
+            switch(argv[cpt][1])
+            {
+                case '1': doTestThread = false; break;
+                case '3': doTestChrono = false; break;
+                case '4': doTestOnePublisherOneListenerThread = false; break;
+                case '5': doTestOnePublisherOneListenerThreadBasic = false; break;
+                case '6': doTestOnePublisherOneListenerThreadParallel = false; break;
+                default: 
+                    std::cerr << "!!!! bad argument !!!!" << std::endl;
+            }
+        }
+        else if (argv[cpt][1] == '+')
+        {
+            switch(argv[cpt][1])
+            {
+                case '2': doTestThread10ms = true; break;
+                default: 
+                    std::cerr << "!!!! bad argument !!!!" << std::endl;
+            }
+        }
+    }
     
     if (doTestThread) testThread();
     if (doTestChrono) testChrono();

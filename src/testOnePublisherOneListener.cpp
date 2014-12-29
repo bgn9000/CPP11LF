@@ -24,31 +24,30 @@ void testOnePublisherOneListener()
     // Publisher fill buffer then listener empty it
     if (doTestOnePublisherOneListenerThreadBasic)
     {
-        Publisher<capacity,int> publisher; // buffer is a vector
-        Listener<capacity,int> listener(publisher);
+        Publisher<capacity, int> publisher; // buffer is a vector
+        Listener<capacity, int> listener(publisher);
         high_resolution_clock::time_point start = high_resolution_clock::now();
         for (int cpt = 0; cpt < loop; ++cpt)
         {
             publisher.fill(cpt);
         }
-        publisher.stop();
+        publisher.finish();
         high_resolution_clock::time_point end = high_resolution_clock::now();
         nanoseconds time_span = duration_cast<nanoseconds>(end - start);
-        
         start = high_resolution_clock::now();
         listener.emptyPublisherBuffer();
         end = high_resolution_clock::now();
         nanoseconds time_span2 = duration_cast<nanoseconds>(end - start);
         std::cout << "Basic fill (vector) took [" << time_span.count() << "] ns then empty took [" << time_span2.count() << "] ns" << std::endl;
         
-        Publisher<capacity,int, std::allocator<int>, std::deque> publisher2; // buffer is a deque
-        Listener<capacity,int, std::allocator<int>, std::deque> listener2(publisher2);
+        Publisher<capacity, int, std::allocator<int>, std::deque> publisher2; // buffer is a deque
+        Listener<capacity, int, std::allocator<int>, std::deque> listener2(publisher2);
         start = high_resolution_clock::now();
         for (int cpt = 0; cpt < loop; ++cpt)
         {
             publisher2.fill(cpt);
         }
-        publisher.stop();
+        publisher2.finish();
         end = high_resolution_clock::now();
         time_span = duration_cast<nanoseconds>(end - start);
         start = high_resolution_clock::now();
@@ -61,21 +60,37 @@ void testOnePublisherOneListener()
     // Parallel fill and empty
     if (doTestOnePublisherOneListenerThreadParallel) 
     {
-        Publisher<capacity,int> publisher; // buffer is a vector
-        Listener<capacity,int> listener(publisher);
+        Publisher<capacity, int> publisher; // buffer is a vector
+        Listener<capacity, int> listener(publisher);
         std::cout << "Async testOneListenerAsync" << std::endl;
-        auto time_span2 = std::async(std::launch::async, testOneListenerAsync<capacity,int>, std::ref(listener));
-std::this_thread::sleep_for(milliseconds(100));
-std::cout << "Parallel fill started" << std::endl;
+        auto time_span2 = std::async(std::launch::async, testOneListenerAsync<capacity, int>, std::ref(listener));
+//std::this_thread::sleep_for(milliseconds(100));
+//std::cout << "Parallel fill started" << std::endl;
+        while(!listener.isReady());
         high_resolution_clock::time_point start = high_resolution_clock::now();
         for (int cpt = 0; cpt < loop; ++cpt)
         {
             publisher.fill(cpt);
         }
-        publisher.stop();
+        publisher.finish();
         high_resolution_clock::time_point end = high_resolution_clock::now();
         nanoseconds time_span = duration_cast<nanoseconds>(end - start);
         std::cout << "Parallel fill (vector) took [" << time_span.count() << "] ns then empty took [" << time_span2.get() << "] ns" << std::endl;
+        
+        Publisher<capacity, int, std::allocator<int>, std::deque> publisher2; // buffer is a deque
+        Listener<capacity, int, std::allocator<int>, std::deque> listener2(publisher2);
+        std::cout << "Async testOneListenerAsync" << std::endl;
+        auto time_span3 = std::async(std::launch::async, testOneListenerAsync<capacity, int, std::allocator<int>, std::deque>, std::ref(listener2));
+        while(!listener2.isReady());
+        start = high_resolution_clock::now();
+        for (int cpt = 0; cpt < loop; ++cpt)
+        {
+            publisher2.fill(cpt);
+        }
+        publisher2.finish();
+        end = high_resolution_clock::now();
+        time_span = duration_cast<nanoseconds>(end - start);
+        std::cout << "Parallel fill (deque) took [" << time_span.count() << "] ns then empty took [" << time_span3.get() << "] ns" << std::endl;
     }
 }
 

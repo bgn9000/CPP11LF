@@ -28,19 +28,18 @@ static __inline__ ticks getticks(void)
 }
 
 extern double FREQUENCY_CPU;
-extern int FREQUENCY_CPU_GETTICKS2TIME;
 
 // tests
 extern void testThread();
 extern void testChrono();
 extern void testOnePublisherOneListener();
 
-const bool doTestThread = true;
-const bool doTestThread10ms = false;
-const bool doTestChrono = true;
-const bool doTestOnePublisherOneListenerThread = true;
-const bool doTestOnePublisherOneListenerThreadBasic = true;
-const bool doTestOnePublisherOneListenerThreadParallel = true;
+extern bool doTestThread;
+extern bool doTestThread10ms;
+extern bool doTestChrono;
+extern bool doTestOnePublisherOneListenerThread;
+extern bool doTestOnePublisherOneListenerThreadBasic;
+extern bool doTestOnePublisherOneListenerThreadParallel;
 
 #endif
 
