@@ -15,7 +15,7 @@ ifneq "" "$(findstring $(CC64), 1 on On ON)"
 else
    CFLAGS=-m32 -march=i686
 endif
-CFLAGS += -std=c++1y -D_REENTRANT -DLinux -Wno-unused-but-set-variable
+CFLAGS += -std=c++1y -D_REENTRANT -DLinux -Wno-unused-but-set-variable -Wno-unused-variable
 ifneq "" "$(findstring $(gcov), 1 on On ON)"
 	CFLAGS+=-fprofile-arcs -ftest-coverage
 endif

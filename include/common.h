@@ -37,6 +37,7 @@ extern void testAlloc();
 extern void testChrono();
 extern void testAtomic();
 extern void testOnePublisherOneListener();
+extern void testCodecStringtoIntOrDouble();
 
 extern bool doTestThread;
 extern bool doTestThread10ms;
@@ -46,6 +47,7 @@ extern bool doTestAtomic;
 extern bool doTestOnePublisherOneListenerThread;
 extern bool doTestOnePublisherOneListenerThreadBasic;
 extern bool doTestOnePublisherOneListenerThreadParallel;
+extern bool doTestCodecStringtoIntOrDouble;
 
 #endif
 

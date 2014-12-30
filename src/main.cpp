@@ -31,6 +31,7 @@ bool doTestThread10ms = false;
 bool doTestAlloc = true;
 bool doTestChrono = true;
 bool doTestAtomic = true;
+bool doTestCodecStringtoIntOrDouble = true;
 bool doTestOnePublisherOneListenerThread = true;
 bool doTestOnePublisherOneListenerThreadBasic = true;
 bool doTestOnePublisherOneListenerThreadParallel = true;
@@ -56,9 +57,10 @@ int main(int argc, char* argv[])
                 case '3': doTestAlloc = false; break;
                 case '4': doTestChrono = false; break;
                 case '5': doTestAtomic = false; break;
-                case '6': doTestOnePublisherOneListenerThread = false; break;
-                case '7': doTestOnePublisherOneListenerThreadBasic = false; break;
-                case '8': doTestOnePublisherOneListenerThreadParallel = false; break;
+                case '6': doTestCodecStringtoIntOrDouble = false; break;
+                case '7': doTestOnePublisherOneListenerThread = false; break;
+                case '8': doTestOnePublisherOneListenerThreadBasic = false; break;
+                case '9': doTestOnePublisherOneListenerThreadParallel = false; break;
                 default: 
                     std::cerr << "!!!! bad argument !!!!" << std::endl;
             }
@@ -78,6 +80,7 @@ int main(int argc, char* argv[])
     if (doTestAlloc) testAlloc();
     if (doTestChrono) testChrono();
     if (doTestAtomic) testAtomic();
+    if (doTestCodecStringtoIntOrDouble) testCodecStringtoIntOrDouble();
     if (doTestOnePublisherOneListenerThread)
     {
         std::thread testOnePublisherOneListenerThread(testOnePublisherOneListener);
