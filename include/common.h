@@ -3,9 +3,11 @@
 
 #include <iostream>
 #include <ctime>
+#include <cassert>
 
 #include <chrono>
 #include <thread>
+#include <atomic>
 
 using namespace std::chrono;
 
@@ -33,12 +35,14 @@ extern double FREQUENCY_CPU;
 extern void testThread();
 extern void testAlloc();
 extern void testChrono();
+extern void testAtomic();
 extern void testOnePublisherOneListener();
 
 extern bool doTestThread;
 extern bool doTestThread10ms;
 extern bool doTestAlloc;
 extern bool doTestChrono;
+extern bool doTestAtomic;
 extern bool doTestOnePublisherOneListenerThread;
 extern bool doTestOnePublisherOneListenerThreadBasic;
 extern bool doTestOnePublisherOneListenerThreadParallel;

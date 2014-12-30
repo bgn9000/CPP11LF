@@ -39,6 +39,34 @@ void testThread()
     ret.get();
     
     constexpr int nbNano = 1000;
+    
+    start = high_resolution_clock::now();
+    for (int cpt=0; cpt < nbNano; ++cpt)
+    {
+        asm volatile ("pause" ::: "memory");
+    }
+    end = high_resolution_clock::now();
+    time_span = duration_cast<nanoseconds>(end - start);
+    std::cout << "asm pause took [" << time_span.count()/nbNano << "] ns" << std::endl;
+    
+    start = high_resolution_clock::now();
+    for (int cpt=0; cpt < nbNano; ++cpt)
+    {
+        asm volatile ("": : :"memory");
+    }
+    end = high_resolution_clock::now();
+    time_span = duration_cast<nanoseconds>(end - start);
+    std::cout << "asm r/w barrier took [" << time_span.count()/nbNano << "] ns" << std::endl;
+    
+    start = high_resolution_clock::now();
+    for (int cpt=0; cpt < nbNano; ++cpt)
+    {
+        std::this_thread::yield();
+    }
+    end = high_resolution_clock::now();
+    time_span = duration_cast<nanoseconds>(end - start);
+    std::cout << "std::this_thread::yield took [" << time_span.count()/nbNano << "] ns" << std::endl;
+    
     start = high_resolution_clock::now();
     for (int cpt=0; cpt < nbNano; ++cpt)
     {
