@@ -43,7 +43,7 @@ void testAlloc()
     for (int cpt=0; cpt < loop; ++cpt)
     {
         char* mycharp = new char[64];
-        delete mycharp;
+        delete [] mycharp;
     }
     end = getticks();
     latency = (double)((ticks)(end-start))/loop;
@@ -64,7 +64,7 @@ void testAlloc()
     for (int cpt=0; cpt < loop; ++cpt)
     {
         char* mycharp = new char[1024];
-        delete mycharp;
+        delete [] mycharp;
     }
     end = getticks();
     latency = (double)((ticks)(end-start))/loop;
@@ -85,7 +85,7 @@ void testAlloc()
     for (int cpt=0; cpt < loop; ++cpt)
     {
         char* mycharp = new char[70000];
-        delete mycharp;
+        delete [] mycharp;
     }
     end = getticks();
     latency = (double)((ticks)(end-start))/loop;

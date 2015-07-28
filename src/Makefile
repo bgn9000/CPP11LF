@@ -1,4 +1,9 @@
 TARGET=cpp11lf
+ifneq   "$(gccversion)" ""
+    GCC=$(gccversion)
+else 
+    GCC=g++-4.9
+endif
 LIB_DIR=lib
 OBJ_DIR=obj
 ifneq "" "$(findstring $(CC64), 1 on On ON)"
@@ -20,14 +25,21 @@ ifneq "" "$(findstring $(gcov), 1 on On ON)"
 	CFLAGS+=-fprofile-arcs -ftest-coverage
 endif
 ifneq "" "$(findstring $(debug), 1 on On ON)"
-        CFLAGS += -g -ggdb -DDEBUG
+    CFLAGS += -g -ggdb -DDEBUG
 else
-        CFLAGS += -g -ggdb -O2
+    CFLAGS += -g -ggdb -O2
+endif
+ifneq "" "$(findstring $(sanitize), 1 on On ON)"
+    CFLAGS += -fsanitize=address -fsanitize=leak -fsanitize=undefined -fsanitize=signed-integer-overflow -fsanitize=shift -fsanitize=integer-divide-by-zero -fsanitize=null 
 endif
 
 INCS = -I../include
-
-MYLIBS += -lnsl -lpthread -ldl -lrt
+ifneq "" "$(findstring $(blosc), 1 on On ON)"
+    CFLAGS += -DUSE_BLOSC
+    INCS += -I$(BLOSC_HOME)/include
+    MYLIBS += -Wl,-Bstatic -L$(BLOSC_HOME)/lib -lblosc -Wl,-Bdynamic    
+endif
+MYLIBS += -latomic -lz -lnsl -lpthread -ldl -lrt
 
 all: $(TARGET)
 	@rm -f $(OBJ_DIR)/main.o
@@ -36,7 +48,7 @@ depend:
 	$(MAKE) $(DEPENDS)
 
 $(TARGET):$(OBJECTS)
-	g++-4.9 -Wall -o $@ $(OBJECTS) $(CFLAGS) $(MYLIBS)
+	$(GCC) -Wall -o $@ $(OBJECTS) $(CFLAGS) $(MYLIBS)
 
 fullclean: cleanlite
 	rm -rf $(OBJ_DIR)
@@ -49,11 +61,11 @@ cleanlite:
 
 $(OBJ_DIR)/%.o : %.cpp
 	@mkdir -p $(OBJ_DIR)
-	g++-4.9 -fbuiltin -Wall -Werror -c -o $@ $< $(INCS) $(CFLAGS)
+	$(GCC) -fbuiltin -Wall -Werror -c -o $@ $< $(INCS) $(CFLAGS)
 
 $(OBJ_DIR)/%.od : %.cpp
 	@mkdir -p $(OBJ_DIR)
-	g++-4.9 -MM -MT $(patsubst %.od, %.o, $@) $(INCS) $(CFLAGS) $< > $@
+	$(GCC) -MM -MT $(patsubst %.od, %.o, $@) $(INCS) $(CFLAGS) $< > $@
 
 ifneq "$(MAKECMDGOALS)" "clean"
 ifneq "$(MAKECMDGOALS)" "fullclean"

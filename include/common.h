@@ -4,10 +4,15 @@
 #include <iostream>
 #include <ctime>
 #include <cassert>
+#include <cstring>
 
 #include <chrono>
 #include <thread>
 #include <atomic>
+
+#ifdef USE_BLOSC
+#   include <blosc.h>
+#endif
 
 using namespace std::chrono;
 
@@ -38,6 +43,7 @@ extern void testChrono();
 extern void testAtomic();
 extern void testOnePublisherOneListener();
 extern void testCodecStringtoIntOrDouble();
+extern void testBlosc();
 
 extern bool doTestThread;
 extern bool doTestThread10ms;
@@ -48,6 +54,7 @@ extern bool doTestOnePublisherOneListenerThread;
 extern bool doTestOnePublisherOneListenerThreadBasic;
 extern bool doTestOnePublisherOneListenerThreadParallel;
 extern bool doTestCodecStringtoIntOrDouble;
+extern bool doTestBlosc;
 
 #endif
 

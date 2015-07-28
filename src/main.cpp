@@ -35,6 +35,7 @@ bool doTestCodecStringtoIntOrDouble = true;
 bool doTestOnePublisherOneListenerThread = true;
 bool doTestOnePublisherOneListenerThreadBasic = true;
 bool doTestOnePublisherOneListenerThreadParallel = true;
+bool doTestBlosc = true;
 
 int main(int argc, char* argv[])
 {
@@ -61,6 +62,7 @@ int main(int argc, char* argv[])
                 case '7': doTestOnePublisherOneListenerThread = false; break;
                 case '8': doTestOnePublisherOneListenerThreadBasic = false; break;
                 case '9': doTestOnePublisherOneListenerThreadParallel = false; break;
+                case 'A': doTestBlosc = false; break;
                 default: 
                     std::cerr << "!!!! bad argument !!!!" << std::endl;
             }
@@ -85,7 +87,8 @@ int main(int argc, char* argv[])
     {
         std::thread testOnePublisherOneListenerThread(testOnePublisherOneListener);
         testOnePublisherOneListenerThread.join();
-    }
+    }   
+    if (doTestBlosc) testBlosc();
     
     std::cout << "End" << std::endl;
     return 0;
