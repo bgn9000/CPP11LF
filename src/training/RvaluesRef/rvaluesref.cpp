@@ -2,6 +2,7 @@
 #include <string>
 #include <cstring>
 #include <cassert>
+#include <vector>
 
 void foo(std::string& str) {}
 void foo2(std::string&& str) {}
@@ -19,10 +20,15 @@ class StringWithMove
     char* buffer;
     size_t len;
 public:
-    StringWithMove() = delete;
+    StringWithMove() : buffer{nullptr}, len{0}
+    {
+        std::cout << "StringWithMove default constructor" << std::endl;
+    }
+    // if "StringWithMove() = default;" => core dump at exit when delete str4 (buffer not nullptr)
+    // if "StringWithMove() = delete;" => str4 not compile
     StringWithMove(const char* _buffer, size_t _len)  : buffer{new char[_len+1]}, len{_len}
     {
-        std::cout << "StringWithMove constructor" << std::endl;
+        std::cout << "StringWithMove second constructor" << std::endl;
         strncpy(buffer, _buffer, len+1);
     }
     ~StringWithMove() { if (buffer != nullptr) delete [] buffer; }
@@ -30,13 +36,16 @@ public:
     StringWithMove(const StringWithMove& s) : buffer{new char[s.len+1]}, len{s.len}
     {
         std::cout << "StringWithMove copy constructor" << std::endl;
-        strncpy(buffer, s.buffer, len+1);
+        if (s.buffer != nullptr) strncpy(buffer, s.buffer, len+1);
     }
-    StringWithMove(StringWithMove&& s) : buffer{std::move(s.buffer)}, len{std::move(s.len)}
+    StringWithMove(StringWithMove&& s) noexcept // comment noexcept for last example (scott)
+        : buffer{std::move(s.buffer)}, len{std::move(s.len)}
     {
         std::cout << "StringWithMove move constructor" << std::endl;
         s.buffer = nullptr;
         s.len = 0;
+        // to prevent compiler to be able to figure out whether an exception may arise
+        if (len == 314) throw int();
     }
 
     StringWithMove substr(size_t _pos, size_t _len)
@@ -65,7 +74,7 @@ public:
         }
         return *this;
     }
-    StringWithMove& operator=(StringWithMove&& s)
+    StringWithMove& operator=(StringWithMove&& s) noexcept
     {
         if (this != &s)
         {
@@ -77,6 +86,8 @@ public:
         }
         return *this;
     }
+
+private:
 };
 
 template <class T> void swap(T& t1, T& t2)
@@ -124,7 +135,7 @@ int main()
     whichValueRef(std::move(str3)); // stay a rvalue
 
     // move semantics
-    // StringWithMove str4; //=> default constructor deleted
+    StringWithMove str4; //=> default constructor
     StringWithMove str5("hello world!", 12);
     StringWithMove str6(str5);
     StringWithMove str7(str5.substr(0,3)); // rvo : construct temporary and use as is
@@ -134,5 +145,18 @@ int main()
     std::cout << "swap..." << std::endl;
     swap(str7, str8);
     swapWithMove(str7, str8);
+
+    // Move operations are an optimization of copy operations, but they are not always cheap
+    // Stroustrup recommendation : it is typically a bad idea to have a move operation throw,
+    // so declare those noexcept whereever possible
+    std::cout << "noexcept (scott meyers' example)..." << std::endl;
+    std::vector<StringWithMove> vs(10);
+    vs.resize(vs.capacity());
+    std::cout << "vs has size of " << vs.size() << std::endl;
+    vs.push_back(StringWithMove("ABC", 3));
+    std::cout << "vs has size of " << vs.size() << std::endl;
+    vs.push_back(StringWithMove("DEF", 3));
+    std::cout << "vs has size of " << vs.size() << std::endl;
+    // if comment noexcept, use copy constructor instead of move constructor
     return 0;
 }
