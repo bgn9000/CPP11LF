@@ -4,6 +4,8 @@ else
     GCC=g++-4.9
 endif
 
+.PHONY: all clean
+
 SOURCES:=$(shell ls *.cpp)
 TARGETS:=$(SOURCES:.cpp=.out)
 
@@ -17,6 +19,9 @@ endif
 MYLIBS += -latomic -lz -lnsl -lpthread -ldl -lrt
 
 all: $(TARGETS)
+
+clean:
+	rm -f *.out
 
 %.out : %.cpp
 	$(GCC) -fbuiltin -Wall -Werror -o $@ $< $(INCS) $(CFLAGS)
