@@ -1,5 +1,4 @@
-#ifndef __LISTENER_H__
-#define __LISTENER_H__
+#pragma once
 
 #include <cassert>
 #include <iostream>
@@ -51,6 +50,4 @@ private:
     size_t pos_;
     std::atomic<bool> ready_;
 };
-
-#endif
 

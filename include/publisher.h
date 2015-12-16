@@ -1,5 +1,4 @@
-#ifndef __PUBLISHER_H__
-#define __PUBLISHER_H__
+#pragma once
 
 #include <iostream>
 
@@ -59,6 +58,4 @@ private:
     std::atomic<size_t> pos_;
     std::atomic<bool> finish_;
 };
-
-#endif
 

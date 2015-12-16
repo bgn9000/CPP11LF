@@ -2,7 +2,7 @@ TARGET=cpp11lf
 ifneq   "$(gccversion)" ""
     GCC=$(gccversion)
 else 
-    GCC=g++-4.9
+    GCC=g++-5
 endif
 LIB_DIR=lib
 OBJ_DIR=obj
@@ -15,10 +15,10 @@ endif
 SOURCES:=$(shell ls *.cpp)
 OBJECTS:=$(addprefix $(OBJ_DIR)/, $(SOURCES:.cpp=.o))
 DEPENDS:=$(addsuffix d, $(OBJECTS))
-ifneq "" "$(findstring $(CC64), 1 on On ON)"
-   CFLAGS=-m64 -fPIC
-else
+ifneq "" "$(findstring $(CC32), 1 on On ON)"
    CFLAGS=-m32 -march=i686
+else
+   CFLAGS=-m64 -fPIC
 endif
 CFLAGS += -std=c++1y -D_REENTRANT -DLinux -Wno-unused-but-set-variable -Wno-unused-variable
 ifneq "" "$(findstring $(gcov), 1 on On ON)"
