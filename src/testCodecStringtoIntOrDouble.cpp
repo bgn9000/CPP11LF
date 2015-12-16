@@ -333,6 +333,15 @@ void testCodecStringtoIntOrDouble()
     time_span = duration_cast<nanoseconds>(end - start);
     std::cout << "strtol took [" << time_span.count()/loop << "] ns" << std::endl;
     
+    start = high_resolution_clock::now();
+    for (int cpt=0; cpt < loop; ++cpt)
+    {
+        long ret = std::stoi(buf2decode);
+    }
+    end = high_resolution_clock::now();
+    time_span = duration_cast<nanoseconds>(end - start);
+    std::cout << "std::stoi took [" << time_span.count()/loop << "] ns" << std::endl;
+    
     // check my algo
     for (int cpt=0; cpt < loop; ++cpt)
     {
@@ -429,6 +438,15 @@ void testCodecStringtoIntOrDouble()
     end = high_resolution_clock::now();
     time_span = duration_cast<nanoseconds>(end - start);
     std::cout << "strtod took [" << time_span.count()/loop << "] ns" << std::endl;
+    
+    start = high_resolution_clock::now();
+    for (int cpt=0; cpt < loop; ++cpt)
+    {
+        double ret = std::stod(buf2decode);
+    }
+    end = high_resolution_clock::now();
+    time_span = duration_cast<nanoseconds>(end - start);
+    std::cout << "std::stod took [" << time_span.count()/loop << "] ns" << std::endl;
     
     // check my algo
     for (int cpt=0; cpt < loop; ++cpt)
