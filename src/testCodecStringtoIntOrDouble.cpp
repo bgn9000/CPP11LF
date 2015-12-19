@@ -111,7 +111,7 @@ inline size_t convert_float(char* str, T val, int precision)
     long long integerPart = (long long)val;
     val -= integerPart;
 
-    int decimalMax = 1;
+    long long decimalMax = 1;
     for (int tmp = precision; tmp > 0; --tmp)
     {
         val *= 10;
@@ -119,7 +119,7 @@ inline size_t convert_float(char* str, T val, int precision)
     }
     val += 0.5;
 
-    int decimal = (int)val;
+    long long decimal = (long long)val;
     // overflow?
     if (decimal >= decimalMax)
     {
@@ -137,7 +137,7 @@ inline size_t convert_float(char* str, T val, int precision)
         // Conversion. Number is reversed.
         while (decimal > 99)
         {
-            const int tmp(decimal / 100);
+            const long long tmp(decimal / 100);
             entry = &digit_lookup_table[(decimal - 100 * tmp) << 1];
             str[pos2] = *entry;
             ++pos2;
@@ -179,7 +179,7 @@ inline size_t convert_float(char* str, T val, int precision)
         // Conversion. Number is reversed.
         while (integerPart > 99)
         {
-            const int tmp(integerPart / 100);
+            const long long tmp(integerPart / 100);
             entry = &digit_lookup_table[(integerPart - 100 * tmp) << 1];
             str[pos2] = *entry;
             ++pos2;
@@ -213,28 +213,33 @@ inline size_t convert_float(char* str, T val, int precision)
 template <typename T>
 inline T retreive_float(const char* str, size_t size)
 {
+    if (size == 0) return 0;
+    
     // sign
     int coef = 1;
     if (*str == '-')
     {
         coef = -1;
         --size;
+        if (size == 0) return 0;
         ++str;
     }
     else if (*str == '+')
     {
         coef = 1;
         --size;
+        if (size == 0) return 0;
         ++str;
     }
-
+    
     // Integer part
-    T num = 0;
+    long long integerPart = 0;
     for (; size && *str && *str != '.' ; --size, ++str)
     {
-        num *= 10;
-        num += *str - '0';
+        integerPart *= 10;
+        integerPart += *str - '0';
     }
+    T num = integerPart;
 
     // Decimal
     if (size && *str == '.')
@@ -256,7 +261,7 @@ inline T retreive_float(const char* str, size_t size)
 
         num += reminder;
     }
-    return coef * num;
+    return num * coef;
 }
 
 void testCodecStringtoIntOrDouble()
@@ -267,6 +272,29 @@ void testCodecStringtoIntOrDouble()
     nanoseconds time_span;
     
     constexpr int loop = 1000000;
+    
+    // reverse string
+    // ==============
+    
+    start = high_resolution_clock::now();
+    std::string mystring("ABCDEFGHIJKLMNOPQRSTUVWXYUZ");
+    for (int cpt=0; cpt < loop; ++cpt)
+    {
+        std::reverse(std::begin(mystring), std::end(mystring));
+    }
+    end = high_resolution_clock::now();
+    time_span = duration_cast<nanoseconds>(end - start);
+    std::cout << "std::reverse(string) took [" << time_span.count()/loop << "] ns" << std::endl;
+    
+    start = high_resolution_clock::now();
+    char mystring2[64] = "ABCDEFGHIJKLMNOPQRSTUVWXYUZ";
+    for (int cpt=0; cpt < loop; ++cpt)
+    {
+        strreverse(mystring2, mystring2+strlen(mystring2));
+    }
+    end = high_resolution_clock::now();
+    time_span = duration_cast<nanoseconds>(end - start);
+    std::cout << "strreverse(string) took [" << time_span.count()/loop << "] ns" << std::endl;
     
     // int to string
     // =============
