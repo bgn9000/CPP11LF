@@ -1,14 +1,11 @@
 #include <string>
 #include <iostream>
-#include <thread>
+#include <future>
 #include <memory>
-#include <condition_variable>
-#include <mutex>
 
 #include <boost/lexical_cast.hpp>
 
-//      Circular Printer 
-// (funny usage of futures and promises, see condvar for more classic implementation)
+//      Circular Printer
 //
 //      A program which takes three inputs (command line)
 //
@@ -52,7 +49,7 @@ int Notice(const char* appName)
 size_t printBlock(size_t pos, int threadNum, const std::string& wholeStringToPrint, int nbCharsToPrint)
 {
     const auto len = wholeStringToPrint.size();
-    std::cout << "Thread\t" << threadNum << ": ";
+    std::cout << "Thread" << threadNum << ":\t";
     while (nbCharsToPrint)
     {
         std::cout << wholeStringToPrint[pos];
@@ -82,7 +79,7 @@ int main(int argc, char* argv[])
 			{
             	std::cerr << "Bad param (-S) : expecting string" << std::endl;
                 Notice(argv[0]);
-	            return -1;			
+	            return -1;
             }
             break;
         case 'N':
@@ -100,7 +97,6 @@ int main(int argc, char* argv[])
             {
             	std::cerr << "Bad param (-N) : expecting number, got [" << optarg << "]" << std::endl;
                 Notice(argv[0]);
-
 	            return -1;			
             }
             break;
@@ -134,79 +130,61 @@ int main(int argc, char* argv[])
 		"] into blocks of [" << nbCharsToPrint <<
 		"] with [" << nbThreads << "] concurrent threads" << std::endl;
 
-
-    if (nbThreads == 1)
+    std::vector<std::shared_ptr<std::promise<size_t>>> promises(nbThreads);
+    std::vector<std::shared_ptr<std::future<size_t>>> futures(nbThreads);
+    std::vector<std::shared_ptr<std::thread>> threads(nbThreads);
+    for (int threadnum = 0; threadnum < nbThreads; ++threadnum)
     {
-        std::cout << "Not implemented..." << std::endl;
-        return 0;
+        promises[threadnum].reset(new std::promise<size_t>());
+        futures[threadnum].reset(new std::future<size_t>());
+        *futures[threadnum] = promises[threadnum]->get_future();
     }
 
-    std::vector<std::condition_variable> condition_vars(nbThreads);
-    std::vector<std::mutex> mutexes(nbThreads);
-    std::vector<std::shared_ptr<std::thread>> threads(nbThreads);
+    threads[0].reset(
+        new std::thread(
+            [&promises, &futures, nbThreads, &wholeStringToPrint, nbCharsToPrint]() 
+            {
+                size_t pos = 0;
+                size_t newpos = printBlock(pos, 1, wholeStringToPrint, nbCharsToPrint);
+                promises[0]->set_value(newpos);
+                while(1)
+                {
+                    pos = futures[nbThreads-1]->get();
+                    futures[nbThreads-1].reset(new std::future<size_t>());
+                    promises[nbThreads-1].reset(new std::promise<size_t>());
+                    *futures[nbThreads-1] = promises[nbThreads-1]->get_future();
+                    newpos = printBlock(pos, 1, wholeStringToPrint, nbCharsToPrint);
+                    promises[0]->set_value(newpos);
+                }
+            }
+        )
+    );
 
-    size_t pos = 0;
-
-    for (int threadnum = 1; threadnum < nbThreads-1; ++threadnum)
+    for (int threadnum = 1; threadnum < nbThreads; ++threadnum)
     {
         threads[threadnum].reset(
             new std::thread(
-	            [&condition_vars, &mutexes, &pos, threadnum, &wholeStringToPrint, nbCharsToPrint]() 
+	            [&promises, &futures, threadnum, &wholeStringToPrint, nbCharsToPrint]() 
 		        {
+                    size_t pos = 0;
+                    size_t newpos = 0;
                     while(1)
                     {
-                        std::unique_lock<std::mutex> lock1(mutexes[threadnum]);
-                        condition_vars[threadnum].wait(lock1);
-                        pos = printBlock(pos, threadnum+1, wholeStringToPrint, nbCharsToPrint);
-                        std::unique_lock<std::mutex> lock2(mutexes[threadnum+1]);
-                        condition_vars[threadnum+1].notify_one();
+                        pos = futures[threadnum-1]->get();
+                        futures[threadnum-1].reset(new std::future<size_t>());
+                        promises[threadnum-1].reset(new std::promise<size_t>());
+                        *futures[threadnum-1] = promises[threadnum-1]->get_future();
+                        newpos = printBlock(pos, threadnum+1, wholeStringToPrint, nbCharsToPrint);
+                        promises[threadnum]->set_value(newpos);
                     }
 		        }
             )
         );
     }
-
-    threads[nbThreads-1].reset(
-        new std::thread(
-            [&condition_vars, &mutexes, &pos, nbThreads, &wholeStringToPrint, nbCharsToPrint]() 
-	        {
-                while(1)
-                {
-                    std::unique_lock<std::mutex> lock1(mutexes[nbThreads-1]);
-                    condition_vars[nbThreads-1].wait(lock1);
-                    pos = printBlock(pos, nbThreads, wholeStringToPrint, nbCharsToPrint);
-                    std::unique_lock<std::mutex> lock2(mutexes[0]);
-                    condition_vars[0].notify_one();
-                }
-	        }
-        )
-    );
-
-    threads[0].reset(
-        new std::thread(
-            [&condition_vars, &mutexes, &pos, &wholeStringToPrint, nbCharsToPrint]() 
-            {
-                pos = printBlock(pos, 1, wholeStringToPrint, nbCharsToPrint);
-                {
-                    std::unique_lock<std::mutex> lock(mutexes[1]);
-                    condition_vars[1].notify_one();
-                }
-                while(1)
-                {
-                    std::unique_lock<std::mutex> lock1(mutexes[0]);
-                    condition_vars[0].wait(lock1);
-                    pos = printBlock(pos, 1, wholeStringToPrint, nbCharsToPrint);
-                    std::unique_lock<std::mutex> lock2(mutexes[1]);
-                    condition_vars[1].notify_one();
-                }
-            }
-        )
-    );
     
     for (int threadnum = 0; threadnum < nbThreads; ++threadnum)
     {
         threads[threadnum]->join();
     }
-
 	return 0;
 }

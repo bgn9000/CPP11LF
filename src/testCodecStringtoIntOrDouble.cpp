@@ -239,7 +239,7 @@ inline T retreive_float(const char* str, size_t size)
         integerPart *= 10;
         integerPart += *str - '0';
     }
-    T num = integerPart;
+    T num = static_cast<double>(integerPart);
 
     // Decimal
     if (size && *str == '.')
