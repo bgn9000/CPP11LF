@@ -8,7 +8,6 @@
 #include <boost/lexical_cast.hpp>
 
 //      Circular Printer 
-// (funny usage of futures and promises, see condvar for more classic implementation)
 //
 //      A program which takes three inputs (command line)
 //
