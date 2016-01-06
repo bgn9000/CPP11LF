@@ -74,8 +74,20 @@ void testChrono()
     latency = (double)((ticks)(end-start))/loop;
     std::cout << "chrono high_resolution_clock with latency [" << latency << "] (ticks)" << std::endl;
     
+    start = getticks();
+    end = getticks();
+    latency = (ticks)(end-start);
+    std::cout << "Minimum duration when getting ticks [" << latency << "] (ticks)" << std::endl;
+    
+    start = getticks();
     high_resolution_clock::time_point t1 = high_resolution_clock::now();
-    high_resolution_clock::time_point t2;
+    high_resolution_clock::time_point t2 = high_resolution_clock::now();
+    end = getticks();
+    latency = (ticks)(end-start);
+    std::cout << "Minimum duration with chrono [" << duration_cast<nanoseconds>(t2 - t1).count() 
+        << "] (ns) with  [" << latency << "] (ticks)" << std::endl;
+    
+    t1 = high_resolution_clock::now();
     nanoseconds time_span;
     start = getticks();
     for (int cpt=0; cpt < loop; ++cpt)
