@@ -2,6 +2,7 @@
 #include <fstream>
 #include <thread>
 #include <atomic>
+#include <future>
 
 #include <chrono>
 using namespace std::chrono;
@@ -19,7 +20,8 @@ std::string thread_siblings_list()
 struct Data
 {
     int nb = 0;
-    std::atomic<bool> start{false};
+    std::promise<void> t1_ready;
+    std::promise<void> t2_ready;
     std::atomic<bool> stop{false};
     
     int x = 0;
@@ -32,10 +34,11 @@ struct Data
 
 using millis = duration<double, std::milli>;
 
-void threaded_function1(Data& data, int max)
+void threaded_function1(Data& data, int max, std::shared_future<void>& start)
 {
-    while (!data.start) ;
-    high_resolution_clock::time_point start = high_resolution_clock::now();
+    data.t1_ready.set_value();
+    start.wait();
+    high_resolution_clock::time_point begin = high_resolution_clock::now();
     while (++data.nb < max)
     {
         int flag = data.flag.load(std::memory_order_relaxed);
@@ -49,14 +52,15 @@ void threaded_function1(Data& data, int max)
         }
     }
     high_resolution_clock::time_point end = high_resolution_clock::now();
-    data.time_span = duration_cast<millis>(end - start).count();
+    data.time_span = duration_cast<millis>(end - begin).count();
     data.stop = true;
 }
 
-void threaded_function2(Data& data)
+void threaded_function2(Data& data, std::shared_future<void>& start)
 {
+    data.t2_ready.set_value();
+    start.wait();
     auto x_prev = 0, y_prev = 0, z_prev = 0;
-    data.start = true;
     while (!data.stop)
     {
         int flag = data.flag.load(std::memory_order_relaxed);
@@ -72,10 +76,12 @@ void threaded_function2(Data& data)
     }
 }
 
-void threaded_function1b(Data& data, int max)
+void threaded_function1b(Data& data, int max, std::shared_future<void>& start)
 {
-    while (!data.start) ;
-    high_resolution_clock::time_point start = high_resolution_clock::now();
+
+    data.t1_ready.set_value();
+    start.wait();
+    high_resolution_clock::time_point begin = high_resolution_clock::now();
     while (++data.nb < max)
     {
         if (data.flag == 0)
@@ -87,14 +93,15 @@ void threaded_function1b(Data& data, int max)
         }
     }
     high_resolution_clock::time_point end = high_resolution_clock::now();
-    data.time_span = duration_cast<millis>(end - start).count();
+    data.time_span = duration_cast<millis>(end - begin).count();
     data.stop = true;
 }
 
-void threaded_function2b(Data& data)
+void threaded_function2b(Data& data, std::shared_future<void>& start)
 {
+    data.t2_ready.set_value();
+    start.wait();
     auto x_prev = 0, y_prev = 0, z_prev = 0;
-    data.start = true;
     while (!data.stop)
     {
         if (data.flag != 0)
@@ -123,32 +130,54 @@ int main()
     cpu_set_t cpuset;
     
     Data data1;
-    std::thread t1(threaded_function1, std::ref(data1), 300'000'000);
-    CPU_ZERO(&cpuset);
-    CPU_SET(core1, &cpuset);
-    rc = pthread_setaffinity_np(t1.native_handle(), sizeof(cpu_set_t), &cpuset);
-    std::thread t2(threaded_function2, std::ref(data1));
-    CPU_ZERO(&cpuset);
-    CPU_SET(core2, &cpuset);
-    rc = pthread_setaffinity_np(t2.native_handle(), sizeof(cpu_set_t), &cpuset);
-    t1.join();
-    t2.join();
+    {
+        std::promise<void> ready;
+        std::shared_future<void> start(ready.get_future());
+        
+        std::thread t1(threaded_function1, std::ref(data1), 300'000'000, std::ref(start));
+        CPU_ZERO(&cpuset);
+        CPU_SET(core1, &cpuset);
+        rc = pthread_setaffinity_np(t1.native_handle(), sizeof(cpu_set_t), &cpuset);
+        
+        std::thread t2(threaded_function2, std::ref(data1), std::ref(start));
+        CPU_ZERO(&cpuset);
+        CPU_SET(core2, &cpuset);
+        rc = pthread_setaffinity_np(t2.native_handle(), sizeof(cpu_set_t), &cpuset);
+        
+        data1.t1_ready.get_future().wait();
+        data1.t2_ready.get_future().wait();
+        ready.set_value();
+        
+        t1.join();
+        t2.join();
+    }
     
     // cooling cpu
     std::this_thread::sleep_for(std::chrono::seconds(10));
     
     Data data2;
-    std::thread t1b(threaded_function1b, std::ref(data2), 300'000'000);
-    CPU_ZERO(&cpuset);
-    CPU_SET(core1, &cpuset);
-    rc = pthread_setaffinity_np(t1b.native_handle(), sizeof(cpu_set_t), &cpuset);
-    std::thread t2b(threaded_function2b, std::ref(data2));
-    CPU_ZERO(&cpuset);
-    CPU_SET(core2, &cpuset);
-    rc = pthread_setaffinity_np(t2b.native_handle(), sizeof(cpu_set_t), &cpuset);
-    t1b.join();
-    t2b.join();
+    {
+        std::promise<void> ready;
+        std::shared_future<void> start(ready.get_future());
     
+        std::thread t1b(threaded_function1b, std::ref(data2), 300'000'000, std::ref(start));
+        CPU_ZERO(&cpuset);
+        CPU_SET(core1, &cpuset);
+        rc = pthread_setaffinity_np(t1b.native_handle(), sizeof(cpu_set_t), &cpuset);
+        
+        std::thread t2b(threaded_function2b, std::ref(data2), std::ref(start));
+        CPU_ZERO(&cpuset);
+        CPU_SET(core2, &cpuset);
+        rc = pthread_setaffinity_np(t2b.native_handle(), sizeof(cpu_set_t), &cpuset);
+        
+        data2.t1_ready.get_future().wait();
+        data2.t2_ready.get_future().wait();
+        ready.set_value();
+        
+        t1b.join();
+        t2b.join();
+    }
+
     if (data1.time_span < data2.time_span)
         std::cout << "1 (" << data1.time_span << ") faster than 2 (" << data2.time_span << ')' << std::endl;
     else
