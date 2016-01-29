@@ -31,5 +31,7 @@ int main()
     // return type
     auto res = wrapper(secondfunction, 2);
     std::cout << "type is " << typeid(res).name() << " and res=" << res << std::endl;
+    
+    return 0;
 }
 
