@@ -103,6 +103,23 @@ void testnull(std::nullptr_t p)
     std::cout << "testnull nullptr: null_pointer=" << std::is_null_pointer<decltype(p)>::value << std::endl;
 }
 
+class DelegatingConstructor
+{
+    double val;
+    
+public:
+    DelegatingConstructor(int v) : DelegatingConstructor(static_cast<double>(v)) { std::cout << "DelegatingConstructor: int= " << val << std::endl; }
+    DelegatingConstructor(std::string str) : DelegatingConstructor(std::stod(str)) { std::cout << "DelegatingConstructor: string=" << val << std::endl; }
+    DelegatingConstructor(double v = 0.0) : val(v) { std::cout << "DelegatingConstructor: double=" << val << std::endl; }
+};
+
+class InheritingConstructor : public DelegatingConstructor
+{
+public:
+    // Instead of rewriting above constructors which is modification later error prone
+    using DelegatingConstructor::DelegatingConstructor;
+};
+
 int main()
 {
     printNums( {10,20,30} );
@@ -173,5 +190,11 @@ int main()
     testnull(strnull);
 
     testnull(nullptr);
+    
+    DelegatingConstructor delegate;
+    DelegatingConstructor delegate2(100);
+    DelegatingConstructor delegate3(std::string("500.1"));
+    InheritingConstructor inherite(200);
+    InheritingConstructor inherite2("600.35");
     return 0;
 }
