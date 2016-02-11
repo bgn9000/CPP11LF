@@ -22,9 +22,15 @@
 
 // example 1
 template <class T>
-constexpr auto size(const T& t)
+constexpr auto size(const T&)
 {
     return std::tuple_size<T>::value;
+}
+
+template <typename... Args>
+constexpr auto size2(const std::tuple<Args...>&)
+{
+        return sizeof...(Args);
 }
 
 // example 2
@@ -136,21 +142,27 @@ int main()
     auto size_bar = size(bar);
     std::cout << "Size of foo=" << size_foo << " bar=" << size_bar << std::endl;
     
+    size_foo = size2(foo);
+    size_bar = size2(bar);
+    std::cout << "Size (v2) of foo=" << size_foo << " bar=" << size_bar << std::endl;
+    
     // display elements of tuple
-    std::cout << "foo=" << std::get<0>(foo) << ' ' << std::get<1>(foo) << ' ' << std::get<2>(foo) << std::endl;
+    std::cout << "foo=(" << std::get<0>(foo) << ", " << std::get<1>(foo) << ", " << std::get<2>(foo) << ')' << std::endl;
     
     // swap tuples
     std::tuple<int, std::string, double> foo2 (2000, "hi there", 1.0/3);
-    std::cout << "foo2=" << std::get<0>(foo2) << ' ' << std::get<1>(foo2) << ' ' << std::get<2>(foo2) << std::endl;
+    std::cout << "foo2=(" << std::get<0>(foo2) << ", " << std::get<1>(foo2) << ", " << std::get<2>(foo2) << ')' << std::endl;
     foo.swap(foo2);
-    std::cout << "after swap, foo=" << std::get<0>(foo) << ' ' << std::get<1>(foo) << ' ' << std::get<2>(foo) << std::endl;
-    std::cout << "after swap, foo2=" << std::get<0>(foo2) << ' ' << std::get<1>(foo2) << ' ' << std::get<2>(foo2) << std::endl;
+    std::cout << "after swap, foo=(" << std::get<0>(foo) << ", " << std::get<1>(foo) << ", " << std::get<2>(foo) << ')' << std::endl;
+    std::cout << "after swap, foo2=(" << std::get<0>(foo2) << ", " << std::get<1>(foo2) << ", " << std::get<2>(foo2) << ')' << std::endl;
     
     // modify element (need same type)
-    std::cout << "before modify, bar=" << std::get<0>(bar) << ' ' << std::get<1>(bar) << ' ' << std::get<2>(bar) << ' ' << std::get<3>(bar) << std::endl;
+    std::cout << "before modify, bar=(" 
+        << std::get<0>(bar) << ", " << std::get<1>(bar) << ", " << std::get<2>(bar) << ", " << std::get<3>(bar) << ')' << std::endl;
     std::get<0>(bar) = "hello world";
     std::get<1>(bar) = 2.0;
-    std::cout << "after modify, bar=" << std::get<0>(bar) << ' ' << std::get<1>(bar) << ' ' << std::get<2>(bar) << ' ' << std::get<3>(bar) << std::endl;
+    std::cout << "after modify, bar=(" 
+        << std::get<0>(bar) << ", " << std::get<1>(bar) << ", " << std::get<2>(bar) << ", " << std::get<3>(bar) << ')' << std::endl;
     
     // unpack elements
     auto myint = 0;
@@ -164,7 +176,7 @@ int main()
     // SumAgrs does not call itself recursively : it calls another instantiation with one less parameter (no recursion).
     constexpr auto sumInts = SumArgs(1, 2, 3, 4, 5);
     constexpr auto sumFloats = SumArgs(1.1, 2.2, 3.3, 4.4, 5.5);
-    auto sumStrings = SumArgs(std::string("hello "), std::string("world !")); // constexpr result not allowed 
+    auto sumStrings = SumArgs(std::string("hello "), std::string("world !")); // constexpr result not allowed for such type
     std::cout << "SumArgs(int)=" << sumInts << std::endl;
     std::cout << "SumArgs(float)=" << sumFloats << std::endl;
     std::cout << "SumArgs(string)=" << sumStrings << std::endl;
