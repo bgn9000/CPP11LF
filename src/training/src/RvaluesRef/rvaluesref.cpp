@@ -5,6 +5,8 @@
 #include <vector>
 #include <memory>
 
+#include <type_traits>
+
 void foo(std::string& str) {}
 void foo2(std::string&& str) {}
 void bar(const std::string& str) {}
@@ -168,6 +170,16 @@ int main()
     whichValueRef(str3);
     whichValueRef(hello.substr(0,3)); // rvalue ref
     whichValueRef(str2);
+    
+    // std::move is a cast (std::remove_refernce and cast to &&)
+    std::cout << std::boolalpha;
+    std::cout << "same type<int, int>=" << std::is_same<int, int>() << std::endl;
+    std::cout << "same type<int, int&>=" << std::is_same<int, int&>() << std::endl;
+    std::cout << "same type<int, int&>=" << std::is_same<int, int&&>() << std::endl;
+    
+    std::cout << "same type<int, std::remove_reference<int>::type>=" << std::is_same<int, std::remove_reference<int>::type>() << std::endl;
+    std::cout << "same type<int, std::remove_reference<int&>::type>=" << std::is_same<int, std::remove_reference<int&&>::type>() << std::endl;
+    std::cout << "same type<int, std::remove_reference<int&&>::type>=" << std::is_same<int, std::remove_reference<int&&>::type>() << std::endl;
 
     // turn anything to a rvalue with std::move and then bound to a rvalue ref
     std::cout << "\nstd::move..." << std::endl;
@@ -246,3 +258,4 @@ int main()
 
     return 0;
 }
+
