@@ -120,6 +120,33 @@ public:
     using DelegatingConstructor::DelegatingConstructor;
 };
 
+class OverrideAndFinal
+{
+public:
+    virtual void f() const { std::cout << "call OverrideAndFinal::f()" << std::endl; }
+    virtual void f(int) const { std::cout << "call OverrideAndFinal::f(int) : overloading f" << std::endl; }
+    virtual void f(float) const { std::cout << "call OverrideAndFinal::f(float) : overloading f" << std::endl; }
+    virtual void g() final { std::cout << "call OverrideAndFinal::g()" << std::endl; }
+};
+
+class OverrideAndFinal2 : public OverrideAndFinal
+{
+public:
+    // override (special identifier): the compiler will check the base class(es) to see if there is a virtual function with this exact signature. 
+    // And if there is not, the compiler will error out.
+    void f() const override { std::cout << "call OverrideAndFinal2::f()" << std::endl; }
+    //errors raised: 
+    //  void f() override {}
+    //  void f(int) override {}
+    //  void h() override {}
+    
+    //error: no further overriding because of final
+    //  void g() {}
+    
+    // comment this will produce errors below
+    using OverrideAndFinal::f;
+};
+
 int main()
 {
     printNums( {10,20,30} );
@@ -196,5 +223,18 @@ int main()
     DelegatingConstructor delegate3(std::string("500.1"));
     InheritingConstructor inherite(200);
     InheritingConstructor inherite2("600.35");
+    
+    OverrideAndFinal overrideFinal;
+    overrideFinal.f();
+    overrideFinal.f(1);
+    overrideFinal.f(1.0f);
+    overrideFinal.g();
+    OverrideAndFinal2 overrideFinal2;
+    overrideFinal2.f();
+    //if comment using then 2 errors (because overriding hides overloading): 
+    overrideFinal2.f(1);
+    overrideFinal2.f(1.0f);
+    overrideFinal2.g();
     return 0;
 }
+
