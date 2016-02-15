@@ -130,7 +130,7 @@ std::ostream& operator<<(std::ostream& out, const std::tuple<Args...>& t)
 }
 
 int main()
-{    
+{
     // first example of variadic : template<class... Args> class tuple;
         
     // two ways to create a tuple:

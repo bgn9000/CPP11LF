@@ -14,7 +14,9 @@ In src/training section, I am providing some examples of new C++11/14 features w
 - Threads & Futures & promisses (funny design of Circular Printer example)
 - Threads & atomics (fences)
 - Rvalues, move semantics, universal ref and perfect forwarding
-- Variadic templates & meta pograming introduction
+- Template Meta Programming
+- Variadic templates
+
 
 
 
