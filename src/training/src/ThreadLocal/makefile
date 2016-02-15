@@ -9,7 +9,7 @@ endif
 SOURCES:=$(shell ls *.cpp)
 TARGETS:=$(SOURCES:.cpp=.out)
 
-CFLAGS=-m64 -fPIC
+CFLAGS=-O2 -m64 -fPIC
 CFLAGS += -std=c++14 -D_REENTRANT -DLinux -pedantic-errors -Wconversion -Wno-unused-but-set-variable -Wno-unused-variable
 
 ifneq "" "$(findstring $(sanitize), 1 on On ON)"
