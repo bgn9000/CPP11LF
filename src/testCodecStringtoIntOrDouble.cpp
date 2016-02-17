@@ -269,230 +269,180 @@ void testCodecStringtoIntOrDouble()
     std::cout << "================== testCodecStringtoIntOrDouble =================" << std::endl;
     
     high_resolution_clock::time_point start, end;
-    nanoseconds time_span;
+    auto time_span1 = 0ULL, time_span2 = 0ULL, time_span3 = 0ULL, time_span4 = 0ULL;
     
-    constexpr int loop = 1000000;
+    constexpr int loop = 1'000'000;
     
     // reverse string
     // ==============
     
-    start = high_resolution_clock::now();
     std::string mystring("ABCDEFGHIJKLMNOPQRSTUVWXYUZ");
     for (int cpt=0; cpt < loop; ++cpt)
     {
-        std::reverse(std::begin(mystring), std::end(mystring));
+        std::string ret = boost::lexical_cast<std::string>(cpt) + mystring;
+        char* ret2 = strdup(ret.c_str());
+        
+        start = high_resolution_clock::now();
+        std::reverse(std::begin(ret), std::end(ret));
+        end = high_resolution_clock::now();
+        time_span1 += duration_cast<nanoseconds>(end - start).count();
+        
+        start = high_resolution_clock::now();
+        strreverse(ret2, ret2+strlen(ret2)-1);
+        end = high_resolution_clock::now();
+        time_span2 += duration_cast<nanoseconds>(end - start).count();
+        
+        // check algo
+        assert(ret == ret2 || printf("returns differs (%s) is not equal (%s)", ret.c_str(), ret2) == 0);
+        free(ret2);
     }
-    end = high_resolution_clock::now();
-    time_span = duration_cast<nanoseconds>(end - start);
-    std::cout << "std::reverse(string) took [" << time_span.count()/loop << "] ns" << std::endl;
-    
-    start = high_resolution_clock::now();
-    char mystring2[64] = "ABCDEFGHIJKLMNOPQRSTUVWXYUZ";
-    for (int cpt=0; cpt < loop; ++cpt)
-    {
-        strreverse(mystring2, mystring2+strlen(mystring2));
-    }
-    end = high_resolution_clock::now();
-    time_span = duration_cast<nanoseconds>(end - start);
-    std::cout << "strreverse(string) took [" << time_span.count()/loop << "] ns" << std::endl;
+    std::cout << "std::reverse(string) took [" << time_span1/loop << "] ns" << std::endl;
+    std::cout << "strreverse(string) took [" << time_span2/loop << "] ns" << std::endl;
     
     // int to string
     // =============
     
-    start = high_resolution_clock::now();
+    time_span1 = 0ULL, time_span2 = 0ULL, time_span3 = 0ULL, time_span4 = 0ULL;
     for (int cpt=0; cpt < loop; ++cpt)
     {
         char buf[32] = {};
+        
+        start = high_resolution_clock::now();
         sprintf(buf, "%d", cpt);
-    }
-    end = high_resolution_clock::now();
-    time_span = duration_cast<nanoseconds>(end - start);
-    std::cout << "sprintf(int) took [" << time_span.count()/loop << "] ns" << std::endl;
-    
-    start = high_resolution_clock::now();
-    for (int cpt=0; cpt < loop; ++cpt)
-    {
-        std::string ret = boost::lexical_cast<std::string>(cpt);
-    }
-    end = high_resolution_clock::now();
-    time_span = duration_cast<nanoseconds>(end - start);
-    std::cout << "boost::lexical_cast<std::string>(int) took [" << time_span.count()/loop << "] ns" << std::endl;
-    
-    // check my algo
-    for (int cpt=0; cpt < loop; ++cpt)
-    {
-        char buf[32] = {};
+        end = high_resolution_clock::now();
+        time_span1 += duration_cast<nanoseconds>(end - start).count();
+        
+        start = high_resolution_clock::now();
         std::string res = boost::lexical_cast<std::string>(cpt);
-        size_t ret = convert_signed_base10<int>(cpt, buf);
+        end = high_resolution_clock::now();
+        time_span2 += duration_cast<nanoseconds>(end - start).count();
+        
+        memset(&buf, '\0', 32);
+        start = high_resolution_clock::now();
+        auto ret = convert_signed_base10<int>(cpt, buf);
+        end = high_resolution_clock::now();
+        time_span3 += duration_cast<nanoseconds>(end - start).count();
+        
+        // check algo
         assert(ret == res.length());
         assert(res == buf);
     }
-    
-    start = high_resolution_clock::now();
-    for (int cpt=0; cpt < loop; ++cpt)
-    {
-        char buf[32] = {};
-        int ret = convert_signed_base10<int>(cpt, buf);
-    }
-    end = high_resolution_clock::now();
-    time_span = duration_cast<nanoseconds>(end - start);
-    std::cout << "convert_signed_base10<int> took [" << time_span.count()/loop << "] ns" << std::endl;
-    
+    std::cout << "sprintf(int) took [" << time_span1/loop << "] ns" << std::endl;    
+    std::cout << "boost::lexical_cast<std::string>(int) took [" << time_span2/loop << "] ns" << std::endl;
+    std::cout << "convert_signed_base10<int> took [" << time_span3/loop << "] ns" << std::endl;
+        
     // string to int
     // =============
     
-    std::string buf2decode("12345678");
-    start = high_resolution_clock::now();
-    for (int cpt=0; cpt < loop; ++cpt)
-    {
-        int ret = boost::lexical_cast<int>(buf2decode);
-    }
-    end = high_resolution_clock::now();
-    time_span = duration_cast<nanoseconds>(end - start);
-    std::cout << "boost::lexical_cast<int>(string) took [" << time_span.count()/loop << "] ns" << std::endl;
-    
+    time_span1 = 0ULL, time_span2 = 0ULL, time_span3 = 0ULL, time_span4 = 0ULL;
     char *endptr = 0;
-    start = high_resolution_clock::now();
     for (int cpt=0; cpt < loop; ++cpt)
     {
-        long ret = strtol(buf2decode.c_str(), &endptr, 10);
+        std::string buf2decode = boost::lexical_cast<std::string>(cpt);
+        
+        start = high_resolution_clock::now();
+        long ret = boost::lexical_cast<int>(buf2decode);
+        end = high_resolution_clock::now();
+        time_span1 += duration_cast<nanoseconds>(end - start).count();
+        
+        start = high_resolution_clock::now();
+        long ret2 = strtol(buf2decode.c_str(), &endptr, 10);
+        end = high_resolution_clock::now();
+        time_span2 += duration_cast<nanoseconds>(end - start).count();
+        
+        start = high_resolution_clock::now();
+        ret2 = std::stoi(buf2decode);
+        end = high_resolution_clock::now();
+        time_span3 += duration_cast<nanoseconds>(end - start).count();
+        
+        start = high_resolution_clock::now();
+        ret2 = retreive_signed_base10<int>(buf2decode.c_str(), buf2decode.length());
+        end = high_resolution_clock::now();
+        time_span4 += duration_cast<nanoseconds>(end - start).count();
+        
+        // check algo
+        assert(ret == ret2 || printf("returns differs (%ld) is not equal (%ld)", ret, ret2) == 0);
     }
-    end = high_resolution_clock::now();
-    time_span = duration_cast<nanoseconds>(end - start);
-    std::cout << "strtol took [" << time_span.count()/loop << "] ns" << std::endl;
-    
-    start = high_resolution_clock::now();
-    for (int cpt=0; cpt < loop; ++cpt)
-    {
-        long ret = std::stoi(buf2decode);
-    }
-    end = high_resolution_clock::now();
-    time_span = duration_cast<nanoseconds>(end - start);
-    std::cout << "std::stoi took [" << time_span.count()/loop << "] ns" << std::endl;
-    
-    // check my algo
-    for (int cpt=0; cpt < loop; ++cpt)
-    {
-        std::string buf2decode2 = boost::lexical_cast<std::string>(cpt);
-        int ret = boost::lexical_cast<int>(buf2decode2);
-        int ret2 = retreive_signed_base10<int>(buf2decode2.c_str(), buf2decode2.length());
-        assert(ret == ret2);
-    }
-    
-    start = high_resolution_clock::now();
-    for (int cpt=0; cpt < loop; ++cpt)
-    {
-        int ret = retreive_signed_base10<int>(buf2decode.c_str(), buf2decode.length());
-    }
-    end = high_resolution_clock::now();
-    time_span = duration_cast<nanoseconds>(end - start);
-    std::cout << "retreive_signed_base10<int>(string) took [" << time_span.count()/loop << "] ns" << std::endl;
+    std::cout << "boost::lexical_cast<int>(string) took [" << time_span1/loop << "] ns" << std::endl;
+    std::cout << "strtol took [" << time_span2/loop << "] ns" << std::endl;
+    std::cout << "std::stoi took [" << time_span3/loop << "] ns" << std::endl;
+    std::cout << "retreive_signed_base10<int>(string) took [" << time_span4/loop << "] ns" << std::endl;
     
     // double to string
     // ================
     
-    start = high_resolution_clock::now();
+    time_span1 = 0ULL, time_span2 = 0ULL, time_span3 = 0ULL, time_span4 = 0ULL;
     for (int cpt=0; cpt < loop; ++cpt)
     {
         char buf[32] = {};
         double dbl = cpt+0.125;
+        
+        start = high_resolution_clock::now();
         sprintf(buf, "%lf", dbl);
-    }
-    end = high_resolution_clock::now();
-    time_span = duration_cast<nanoseconds>(end - start);
-    std::cout << "sprintf(double) took [" << time_span.count()/loop << "] ns" << std::endl;
-    
-    start = high_resolution_clock::now();
-    for (int cpt=0; cpt < loop; ++cpt)
-    {
-        char buf[32] = {};
-        double dbl = cpt+0.125;
+        end = high_resolution_clock::now();
+        time_span1 += duration_cast<nanoseconds>(end - start).count();
+        
+        memset(&buf, '\0', 32);
+        
+        start = high_resolution_clock::now();
         char* begin = gcvt(dbl, 15, buf);
-    }
-    end = high_resolution_clock::now();
-    time_span = duration_cast<nanoseconds>(end - start);
-    std::cout << "gcvt took [" << time_span.count()/loop << "] ns" << std::endl;
-    
-    start = high_resolution_clock::now();
-    for (int cpt=0; cpt < loop; ++cpt)
-    {
-        double dbl = cpt+0.125;
-        std::string ret = boost::lexical_cast<std::string>(dbl);
-    }
-    end = high_resolution_clock::now();
-    time_span = duration_cast<nanoseconds>(end - start);
-    std::cout << "boost::lexical_cast<std::string>(double) took [" << time_span.count()/loop << "] ns" << std::endl;
- 
-    // check my algo
-    for (int cpt=0; cpt < loop; ++cpt)
-    {
-        double dbl = cpt+0.125;
+        end = high_resolution_clock::now();
+        time_span2 += duration_cast<nanoseconds>(end - start).count();
+        
+        start = high_resolution_clock::now();
         std::string res = boost::lexical_cast<std::string>(dbl);
-        char buf[32] = {};
+        end = high_resolution_clock::now();
+        time_span3 += duration_cast<nanoseconds>(end - start).count();
+        
+        start = high_resolution_clock::now();
         size_t ret = convert_float<double>(buf, dbl, 3);
-//std::cout << "buf=[" << buf << "] res=[" << res << "]" << std::endl;
-//std::cout << "ret=[" << ret << "] resLength=[" << res.length() << "]" << std::endl;
-        assert(ret == res.length());
-        assert(res == buf);
+        end = high_resolution_clock::now();
+        time_span4 += duration_cast<nanoseconds>(end - start).count();
+        
+        // check algo
+        assert(ret == res.length() || printf("returns differs (%ld) is not equal (%ld)", ret, res.length()) == 0);
+        assert(res == buf || printf("returns differs (%s) is not equal (%s)", res.c_str(), buf) == 0);
     }
-    
-    start = high_resolution_clock::now();
-    for (int cpt=0; cpt < loop; ++cpt)
-    {
-        char buf[32] = {};
-        double dbl = cpt+0.125;
-        size_t ret = convert_float<double>(buf, dbl, 3);
-    }
-    end = high_resolution_clock::now();
-    time_span = duration_cast<nanoseconds>(end - start);
-    std::cout << "convert_float<double>(string,double) took [" << time_span.count()/loop << "] ns" << std::endl;
+    std::cout << "sprintf(double) took [" << time_span1/loop << "] ns" << std::endl;
+    std::cout << "gcvt took [" << time_span2/loop << "] ns" << std::endl;
+    std::cout << "boost::lexical_cast<std::string>(double) took [" << time_span3/loop << "] ns" << std::endl;
+    std::cout << "convert_float<double>(string,double) took [" << time_span4/loop << "] ns" << std::endl;
 
     // string to double
-    buf2decode = "123.45678";
-    start = high_resolution_clock::now();
-    for (int cpt=0; cpt < loop; ++cpt)
-    {
-        double ret = boost::lexical_cast<double>(buf2decode);
-    }
-    end = high_resolution_clock::now();
-    time_span = duration_cast<nanoseconds>(end - start);
-    std::cout << "boost::lexical_cast<double>(string) took [" << time_span.count()/loop << "] ns" << std::endl;
+    // ================
     
-    start = high_resolution_clock::now();
-    for (int cpt=0; cpt < loop; ++cpt)
-    {
-        double ret = strtod(buf2decode.c_str(), &endptr);
-    }
-    end = high_resolution_clock::now();
-    time_span = duration_cast<nanoseconds>(end - start);
-    std::cout << "strtod took [" << time_span.count()/loop << "] ns" << std::endl;
-    
-    start = high_resolution_clock::now();
-    for (int cpt=0; cpt < loop; ++cpt)
-    {
-        double ret = std::stod(buf2decode);
-    }
-    end = high_resolution_clock::now();
-    time_span = duration_cast<nanoseconds>(end - start);
-    std::cout << "std::stod took [" << time_span.count()/loop << "] ns" << std::endl;
-    
-    // check my algo
+    time_span1 = 0ULL, time_span2 = 0ULL, time_span3 = 0ULL, time_span4 = 0ULL;
     for (int cpt=0; cpt < loop; ++cpt)
     {
         double dbl = cpt+0.125;
-        std::string buf2decode2 = boost::lexical_cast<std::string>(dbl);
-        double ret = boost::lexical_cast<double>(buf2decode2);
-        double ret2 = retreive_float<double>(buf2decode2.c_str(), buf2decode2.length());
-        assert(ret == ret2);
+        std::string buf2decode = boost::lexical_cast<std::string>(dbl);
+        
+        start = high_resolution_clock::now();
+        double ret = boost::lexical_cast<double>(buf2decode);
+        end = high_resolution_clock::now();
+        time_span1 += duration_cast<nanoseconds>(end - start).count();
+        
+        start = high_resolution_clock::now();
+        ret = strtod(buf2decode.c_str(), &endptr);
+        end = high_resolution_clock::now();
+        time_span2 += duration_cast<nanoseconds>(end - start).count();
+        
+        start = high_resolution_clock::now();
+        ret = std::stod(buf2decode);
+        end = high_resolution_clock::now();
+        time_span3 += duration_cast<nanoseconds>(end - start).count();
+        
+        start = high_resolution_clock::now();
+        double ret2 = retreive_float<double>(buf2decode.c_str(), buf2decode.length());
+        end = high_resolution_clock::now();
+        time_span4 += duration_cast<nanoseconds>(end - start).count();
+        
+        // check algo
+        assert(ret == ret2 || printf("returns differs (%lf) is not equal (%lf)", ret, ret2) == 0);
     }
-    
-    start = high_resolution_clock::now();
-    for (int cpt=0; cpt < loop; ++cpt)
-    {
-        double ret = retreive_float<double>(buf2decode.c_str(), buf2decode.length());
-    }
-    end = high_resolution_clock::now();
-    time_span = duration_cast<nanoseconds>(end - start);
-    std::cout << "retreive_float<double>(string) took [" << time_span.count()/loop << "] ns" << std::endl;
+    std::cout << "boost::lexical_cast<double>(string) took [" << time_span1/loop << "] ns" << std::endl;    
+    std::cout << "strtod took [" << time_span2/loop << "] ns" << std::endl;
+    std::cout << "std::stod took [" << time_span3/loop << "] ns" << std::endl;
+    std::cout << "retreive_float<double>(string) took [" << time_span4/loop << "] ns" << std::endl;
 }
 
