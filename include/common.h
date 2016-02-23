@@ -5,6 +5,7 @@
 #include <ctime>
 #include <cassert>
 #include <cstring>
+#include <cstdio>
 
 #include <chrono>
 #include <thread>
@@ -12,6 +13,10 @@
 
 #ifdef USE_BLOSC
 #   include <blosc.h>
+#endif
+
+#ifdef USE_DOUBLECONV
+#   include <double-conversion.h>
 #endif
 
 using namespace std::chrono;
@@ -44,6 +49,7 @@ extern void testAtomic();
 extern void testOnePublisherOneListener();
 extern void testCodecStringtoIntOrDouble();
 extern void testBlosc();
+extern void testDoubleConversion();
 
 extern bool doTestThread;
 extern bool doTestThread10ms;
@@ -55,5 +61,6 @@ extern bool doTestOnePublisherOneListenerThreadBasic;
 extern bool doTestOnePublisherOneListenerThreadParallel;
 extern bool doTestCodecStringtoIntOrDouble;
 extern bool doTestBlosc;
+extern bool doTestDoubleConversion;
 
 

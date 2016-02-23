@@ -36,6 +36,8 @@ bool doTestOnePublisherOneListenerThread = true;
 bool doTestOnePublisherOneListenerThreadBasic = true;
 bool doTestOnePublisherOneListenerThreadParallel = true;
 bool doTestBlosc = true;
+bool doTestDoubleConversion = true;
+
 
 int main(int argc, char* argv[])
 {
@@ -63,6 +65,7 @@ int main(int argc, char* argv[])
                 case '8': doTestOnePublisherOneListenerThreadBasic = false; break;
                 case '9': doTestOnePublisherOneListenerThreadParallel = false; break;
                 case 'A': doTestBlosc = false; break;
+                case 'B': doTestDoubleConversion = false; break;
                 default: 
                     std::cerr << "!!!! bad argument !!!!" << std::endl;
             }
@@ -82,13 +85,14 @@ int main(int argc, char* argv[])
     if (doTestAlloc) testAlloc();
     if (doTestChrono) testChrono();
     if (doTestAtomic) testAtomic();
+    if (doTestBlosc) testBlosc();
     if (doTestCodecStringtoIntOrDouble) testCodecStringtoIntOrDouble();
+    if (doTestDoubleConversion) testDoubleConversion();
     if (doTestOnePublisherOneListenerThread)
     {
         std::thread testOnePublisherOneListenerThread(testOnePublisherOneListener);
         testOnePublisherOneListenerThread.join();
-    }   
-    if (doTestBlosc) testBlosc();
+    }
     
     std::cout << "End" << std::endl;
     return 0;

@@ -39,6 +39,11 @@ ifneq "" "$(findstring $(blosc), 1 on On ON)"
     INCS += -I$(BLOSC_HOME)/include
     MYLIBS += -Wl,-Bstatic -L$(BLOSC_HOME)/lib -lblosc -Wl,-Bdynamic    
 endif
+ifneq "" "$(findstring $(doubleconv), 1 on On ON)"
+    CFLAGS += -DUSE_DOUBLECONV
+    INCS += -I$(DOUBLECONV_HOME)/double-conversion
+    MYLIBS += -Wl,-Bstatic -L$(DOUBLECONV_HOME)/build/double-conversion -ldouble-conversion -Wl,-Bdynamic    
+endif
 MYLIBS += -latomic -lz -lnsl -lpthread -ldl -lrt
 
 all: $(TARGET)
